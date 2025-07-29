@@ -1,118 +1,156 @@
 // src/components/EnvioForm.jsx
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
 export default function EnvioForm({ onAgregarEntrega }) {
-  const ESTADO_INICIAL = {
-    numeroFactura: "",
-    nombreCliente: "",
-    montoFactura: "",
-    sucursal: "",
-    tipoEntrega: "local",
-    numeroGuia: "",
-    fletera: "",
-    linkSeguimiento: "",
-    fechaEntrega: "",
-    horaEntrega: "",
-    estadoEntrega: "en sucursal",
-  };
-  const [entrega, setEntrega] = useState(ESTADO_INICIAL);
-
-  const handleChange = e => {
-    const { name, value } = e.target;
-    if (name === "tipoEntrega" && value !== "fletera") {
-      setEntrega(prev => ({ ...prev, tipoEntrega: value, numeroGuia: "", fletera: "", linkSeguimiento: "" }));
-    } else {
-      setEntrega(prev => ({ ...prev, [name]: value }));
-    }
-  };
+  const [numeroFactura,      setNumeroFactura]      = useState('');
+  const [nombreCliente,      setNombreCliente]      = useState('');
+  const [monto,              setMonto]              = useState('');
+  const [sucursal,           setSucursal]           = useState('');
+  const [tipoEntrega,        setTipoEntrega]        = useState('Local');
+  const [fechaEntrega,       setFechaEntrega]       = useState('');
+  const [horaEntrega,        setHoraEntrega]        = useState('');
+  // Campos extra para Fletera
+  const [fletera,            setFletera]            = useState('');
+  const [numeroGuia,         setNumeroGuia]         = useState('');
+  const [linkSeguimiento,    setLinkSeguimiento]    = useState('');
 
   const handleSubmit = e => {
     e.preventDefault();
-    onAgregarEntrega(entrega);
-    setEntrega(ESTADO_INICIAL);
+    if (!numeroFactura || !nombreCliente || !monto || !fechaEntrega) return;
+
+    const nuevaEntrega = {
+      id: Date.now().toString(),
+      numeroFactura,
+      nombreCliente,
+      monto: parseFloat(monto),
+      sucursal,
+      tipoEntrega,
+      fechaEntrega,
+      horaEntrega,
+      estadoEntrega: 'pendiente',
+      // Sólo si es Fletera, incluyo estos
+      ...(tipoEntrega === 'Fletera' && {
+        fletera,
+        numeroGuia,
+        linkSeguimiento,
+      }),
+    };
+
+    onAgregarEntrega(nuevaEntrega);
+
+    // Reseteo
+    setNumeroFactura('');
+    setNombreCliente('');
+    setMonto('');
+    setSucursal('');
+    setTipoEntrega('Local');
+    setFechaEntrega('');
+    setHoraEntrega('');
+    setFletera('');
+    setNumeroGuia('');
+    setLinkSeguimiento('');
   };
 
-  const inputClass = "border border-gray-300 rounded px-3 py-2 w-full";
-
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow p-4 rounded grid grid-cols-1 md:grid-cols-3 gap-4">
-      <input
-        name="numeroFactura"
-        value={entrega.numeroFactura}
-        onChange={handleChange}
-        placeholder="Factura #"
-        className={inputClass}
-        required
-      />
-      <input
-        name="nombreCliente"
-        value={entrega.nombreCliente}
-        onChange={handleChange}
-        placeholder="Cliente"
-        className={inputClass}
-        required
-      />
-      <input
-        name="montoFactura"
-        type="number"
-        value={entrega.montoFactura}
-        onChange={handleChange}
-        placeholder="Monto $"
-        className={inputClass}
-        required
-      />
-      <select name="sucursal" value={entrega.sucursal} onChange={handleChange} className={inputClass} required>
-        <option value="">— Sucursal —</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-      </select>
-      <select name="tipoEntrega" value={entrega.tipoEntrega} onChange={handleChange} className={inputClass} required>
-        <option value="local">Local</option>
-        <option value="foranea">Foránea</option>
-        <option value="fletera">Fletera</option>
-      </select>
-      {entrega.tipoEntrega === "fletera" && (
-        <>
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4">
+      {/* Fila 1 */}
+      <div className="grid grid-cols-3 gap-4">
+        <input
+          type="text"
+          placeholder="Factura #"
+          value={numeroFactura}
+          onChange={e => setNumeroFactura(e.target.value)}
+          className="border rounded p-2"
+        />
+        <input
+          type="text"
+          placeholder="Cliente"
+          value={nombreCliente}
+          onChange={e => setNombreCliente(e.target.value)}
+          className="border rounded p-2"
+        />
+        <input
+          type="number"
+          placeholder="Monto $"
+          value={monto}
+          onChange={e => setMonto(e.target.value)}
+          className="border rounded p-2"
+        />
+      </div>
+
+      {/* Fila 2 */}
+      <div className="grid grid-cols-3 gap-4">
+        <select
+          value={sucursal}
+          onChange={e => setSucursal(e.target.value)}
+          className="border rounded p-2"
+        >
+          <option value="">— Sucursal —</option>
+          <option value="CDMX">CDMX</option>
+          <option value="Monterrey">Monterrey</option>
+          <option value="Guadalajara">Guadalajara</option>
+        </select>
+        <select
+          value={tipoEntrega}
+          onChange={e => setTipoEntrega(e.target.value)}
+          className="border rounded p-2"
+        >
+          <option value="Local">Local</option>
+          <option value="Foránea">Foránea</option>
+          <option value="Fletera">Fletera</option>
+        </select>
+        <input
+          type="date"
+          value={fechaEntrega}
+          onChange={e => setFechaEntrega(e.target.value)}
+          className="border rounded p-2"
+        />
+      </div>
+
+      {/* Campos extra para Fletera */}
+      {tipoEntrega === 'Fletera' && (
+        <div className="grid grid-cols-3 gap-4">
           <input
-            name="numeroGuia"
-            value={entrega.numeroGuia}
-            onChange={handleChange}
-            placeholder="Guía #"
-            className={inputClass}
+            type="text"
+            placeholder="Nombre de fletera"
+            value={fletera}
+            onChange={e => setFletera(e.target.value)}
+            className="border rounded p-2"
           />
           <input
-            name="fletera"
-            value={entrega.fletera}
-            onChange={handleChange}
-            placeholder="Fletera"
-            className={inputClass}
+            type="text"
+            placeholder="Número de guía"
+            value={numeroGuia}
+            onChange={e => setNumeroGuia(e.target.value)}
+            className="border rounded p-2"
           />
           <input
-            name="linkSeguimiento"
-            value={entrega.linkSeguimiento}
-            onChange={handleChange}
-            placeholder="Link Tracking"
-            className={inputClass}
+            type="url"
+            placeholder="Link de seguimiento"
+            value={linkSeguimiento}
+            onChange={e => setLinkSeguimiento(e.target.value)}
+            className="border rounded p-2"
           />
-        </>
+        </div>
       )}
-      <input
-        name="fechaEntrega"
-        type="date"
-        value={entrega.fechaEntrega}
-        onChange={handleChange}
-        className={inputClass}
-        required
-      />
-      <input
-        name="horaEntrega"
-        type="time"
-        value={entrega.horaEntrega}
-        onChange={handleChange}
-        className={inputClass}
-        required
-      />
-      <button type="submit" className="col-span-full bg-pl-blue text-white px-4 py-2 rounded">
+
+      {/* Fila 3 */}
+      <div className="grid grid-cols-3 gap-4">
+        <input
+          type="time"
+          value={horaEntrega}
+          onChange={e => setHoraEntrega(e.target.value)}
+          className="border rounded p-2"
+        />
+        {/* Ocupamos dos columnas vacías para conservar el layout */}
+        <div />
+        <div />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 rounded"
+      >
         Registrar Entrega
       </button>
     </form>

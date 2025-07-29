@@ -1,78 +1,95 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
-import EnvioForm from "./components/EnvioForm";
-import FilterBar from "./components/FilterBar";
-import ExportButton from "./components/ExportButton";
-import KanbanBoard from "./components/KanbanBoard";
-import Calendario from "./components/Calendario";
-import DetailsPanel from "./components/DetailsPanel";
+import React, { useState, useEffect } from 'react';
+import EnvioForm     from './components/EnvioForm';
+import FilterBar     from './components/FilterBar';
+import ExportButton  from './components/ExportButton';
+import KanbanBoard   from './components/KanbanBoard';
+import Calendario    from './components/Calendario';
+import DetailsPanel  from './components/DetailsPanel';
 
 export default function App() {
-  const [envios, setEnvios] = useState([]);
-  const [filtroSucursal, setFiltroSucursal] = useState("");
-  const [filtroTipo, setFiltroTipo] = useState("");
+  // — Estados —
+  const [envios, setEnvios]                   = useState([]);
+  const [filtroSucursal,  setFiltroSucursal]  = useState('');
+  const [filtroTipo,      setFiltroTipo]      = useState('');
   const [selectedEntrega, setSelectedEntrega] = useState(null);
 
-  // 1) Carga inicial
+  // — 1) Leer al inicio —
   useEffect(() => {
-    const datos = JSON.parse(localStorage.getItem("entregas") || "[]");
-    setEnvios(datos);
+    const datosGuardados = JSON.parse(
+      localStorage.getItem('entregas') || '[]'
+    );
+    setEnvios(datosGuardados);
   }, []);
 
-  // 2) Guardar en localStorage
-  useEffect(() => {
-    localStorage.setItem("entregas", JSON.stringify(envios));
-  }, [envios]);
-
-  // 3) Agregar nueva entrega
-  const agregarEntrega = (entrega) => {
-    setEnvios(prev => [entrega, ...prev]);
+  // — Función para grabar —
+  const persistEnvios = nuevosEnvios => {
+    localStorage.setItem('entregas', JSON.stringify(nuevosEnvios));
   };
 
-  // 4) Seleccionar entrega para detalles
-  const handleSelectEntrega = (entrega) => {
+  // — 2) Agregar entrega —
+  const agregarEntrega = entrega => {
+    setEnvios(prev => {
+      const nuevos = [entrega, ...prev];
+      persistEnvios(nuevos);
+      return nuevos;
+    });
+  };
+
+  // — 3) Seleccionar entrega —
+  const handleSelectEntrega = entrega => {
     setSelectedEntrega(entrega);
   };
 
-  // 5) Cerrar panel de detalles
-  const handleCloseDetails = () => {
+  // — 4) Eliminar entrega —
+  const handleDelete = () => {
+    if (!window.confirm('¿Eliminar esta entrega?')) return;
+
+    setEnvios(prev => {
+      const nuevos = prev.filter(e => e.id !== selectedEntrega.id);
+      persistEnvios(nuevos);
+      return nuevos;
+    });
     setSelectedEntrega(null);
   };
 
-  // 6) Eliminar entrega
-  const handleDelete = () => {
-    if (window.confirm("¿Eliminar esta entrega?")) {
-      setEnvios(prev => prev.filter(e => e !== selectedEntrega));
-      handleCloseDetails();
-    }
-  };
-
-  // 7) Cambiar estatus con contraseña
+  // — 5) Cambiar estatus —
   const handleChangeStatus = () => {
-    const pwd = prompt("Contraseña para cambiar estatus:");
-    if (pwd !== "1234") {
-      alert("🔒 Contraseña incorrecta");
+    const pwd = prompt('Contraseña para cambiar estatus:');
+    if (pwd !== '1234') {
+      alert('🔒 Contraseña incorrecta');
       return;
     }
-    const current = selectedEntrega.estadoEntrega;
+
     let nextEstado;
-    if (current === "en sucursal") {
-      nextEstado = "en camino";
-    } else if (current === "en camino") {
-      nextEstado = "entregado";
-    } else {
-      alert("⚠️ Ya está en estado final.");
-      return;
+    switch (selectedEntrega.estadoEntrega) {
+      case 'pendiente':  nextEstado = 'en camino'; break;
+      case 'en camino':  nextEstado = 'entregado';  break;
+      default:
+        alert('⚠️ Ya está en estado final.');
+        return;
     }
-    const updated = { ...selectedEntrega, estadoEntrega: nextEstado };
-    setEnvios(prev => prev.map(e => (e === selectedEntrega ? updated : e)));
-    setSelectedEntrega(updated);
+
+    setEnvios(prev => {
+      const nuevos = prev.map(e =>
+        e.id === selectedEntrega.id
+          ? { ...e, estadoEntrega: nextEstado }
+          : e
+      );
+      persistEnvios(nuevos);
+      return nuevos;
+    });
+
+    setSelectedEntrega(prev => ({
+      ...prev,
+      estadoEntrega: nextEstado,
+    }));
   };
 
-  // 8) Filtrar envíos
+  // — 6) Filtrar envío —
   const enviosFiltrados = envios.filter(e => {
-    const okS = filtroSucursal ? e.sucursal === filtroSucursal : true;
-    const okT = filtroTipo ? e.tipoEntrega === filtroTipo : true;
+    const okS = filtroSucursal ? e.sucursal    === filtroSucursal : true;
+    const okT = filtroTipo    ? e.tipoEntrega  === filtroTipo    : true;
     return okS && okT;
   });
 
@@ -82,12 +99,12 @@ export default function App() {
         <h1 className="text-3xl font-bold text-pl-blue">Sistema de Entregas</h1>
       </header>
 
-      {/* ENVIOS FORM */}
+      {/* Formulario */}
       <section className="mb-6">
         <EnvioForm onAgregarEntrega={agregarEntrega} />
       </section>
 
-      {/* FILTER + EXPORT */}
+      {/* Filtros + Exportar */}
       <section className="flex flex-wrap gap-4 mb-6">
         <FilterBar
           filtroSucursal={filtroSucursal}
@@ -95,18 +112,18 @@ export default function App() {
           filtroTipo={filtroTipo}
           setFiltroTipo={setFiltroTipo}
         />
-        <ExportButton datos={enviosFiltrados} />
+        <ExportButton entregas={enviosFiltrados} />
       </section>
 
-      {/* KANBAN */}
+      {/* Kanban */}
       <section className="mb-6">
         <KanbanBoard
-          envios={enviosFiltrados}
+          entregas={enviosFiltrados}
           onVerDetalle={handleSelectEntrega}
         />
       </section>
 
-      {/* CALENDARIO */}
+      {/* Calendario */}
       <section className="mb-6">
         <Calendario
           entregas={enviosFiltrados}
@@ -114,11 +131,11 @@ export default function App() {
         />
       </section>
 
-      {/* PANEL LATERAL DETALLES */}
+      {/* Panel de detalles */}
       {selectedEntrega && (
         <DetailsPanel
           entrega={selectedEntrega}
-          onClose={handleCloseDetails}
+          onClose={() => setSelectedEntrega(null)}
           onDelete={handleDelete}
           onChangeStatus={handleChangeStatus}
         />

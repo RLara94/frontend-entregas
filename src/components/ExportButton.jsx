@@ -1,30 +1,27 @@
-// src/components/KanbanBoard.jsx
-import React from "react";
-import StatusDot from "./StatusDot";
+import React from 'react'
+import { CSVLink } from 'react-csv'
 
-export default function KanbanBoard({ envios, onVerDetalle }) {
-  const estados = ["en sucursal", "en camino", "entregado"];
+export default function ExportButton({ entregas = [] }) {
+  // Si nunca recibes entregas, entregas === []
+  // Filtra sólo las entregas que quieras exportar. Ajusta la condición a tu caso.
+  const entregasFiltradas = entregas.filter(e => e.facturas?.length > 0)
+
+  // Define aquí tus cabeceras según tu modelo de datos
+  const headers = [
+    { label: 'ID', key: 'id' },
+    { label: 'Cliente', key: 'clienteNombre' },
+    { label: 'Fecha', key: 'fechaEntrega' },
+    // … añade más columnas si las necesitas
+  ]
+
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {estados.map(estado => (
-        <div key={estado} className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">{estado.toUpperCase()}</h3>
-          <ul className="space-y-2">
-            {envios
-              .filter(e => e.estadoEntrega === estado)
-              .map((e, i) => (
-                <li
-                  key={i}
-                  onClick={() => onVerDetalle(e)}
-                  className="flex items-center justify-between p-2 bg-pl-gray-light rounded cursor-pointer hover:bg-pl-gray-dark hover:text-white transition"
-                >
-                  <span>{e.numeroFactura} – {e.nombreCliente}</span>
-                  <StatusDot estado={estado} />
-                </li>
-              ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
+    <CSVLink
+      data={entregasFiltradas}
+      headers={headers}
+      filename="entregas.csv"
+      className="btn btn-primary"
+    >
+      Exportar entregas
+    </CSVLink>
+  )
 }

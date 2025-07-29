@@ -1,22 +1,27 @@
-import React from "react";
-import StatusDot from "./StatusDot";
+// src/components/EnvioCard.jsx
+import React from 'react';
+import StatusDot from './StatusDot'; // o como lo tengas
 
-export default function EnvioCard({ envio, onVerDetalle }) {
+export default function EnvioCard({ entrega = {} }) {
+  // destructuramos con defaults
+  const {
+    numeroFactura  = '',
+    nombreCliente  = '',
+    estadoEntrega  = 'pendiente',
+  } = entrega;
+
+  // si no hay ID, no renderices nada
+  if (!entrega.id) return null;
+
   return (
-    <div
-      onClick={() => onVerDetalle(envio)}
-      className="flex items-center space-x-3 p-3 border rounded hover:bg-gray-50 cursor-pointer"
-    >
-      {/* Punto de estado */}
-      <StatusDot estado={envio.estadoEntrega} size={1.5} />
+    <div className="flex items-center space-x-2 p-2 bg-white rounded shadow cursor-pointer hover:bg-gray-50">
+      {/* El puntito de estado */}
+      <StatusDot estado={estadoEntrega} />
 
-      {/* Datos del envío */}
-      <div>
-        <p className="font-medium text-gray-800">{envio.numeroFactura}</p>
-        <p className="text-sm text-gray-600">{envio.nombreCliente}</p>
-        <p className="text-xs text-gray-500">
-          {envio.fechaEntrega} {envio.horaEntrega}
-        </p>
+      {/* Texto de la tarjeta */}
+      <div className="text-sm font-medium">
+        <span>{numeroFactura}</span>
+        <span className="ml-2 text-gray-500">{nombreCliente}</span>
       </div>
     </div>
   );
